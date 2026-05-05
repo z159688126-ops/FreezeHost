@@ -83,6 +83,8 @@ jobs:
 
       - name: 运行重启脚本
         env:
+          FREEZEHOST_PROXY_SERVER: ${{ secrets.FREEZEHOST_PROXY_SERVER }}
+          FREEZEHOST_BASE_URL: ${{ vars.FREEZEHOST_BASE_URL || 'https://free.freezehost.pro' }}
           TG_BOT_TOKEN: ${{ secrets.TG_BOT_TOKEN }}
           TG_CHAT_ID: ${{ secrets.TG_CHAT_ID }}
         run: python restart.py

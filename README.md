@@ -42,6 +42,13 @@
 | `REPO_TOKEN` | ✅ （仅续期） | 具有 `repo` 和 `workflow` 权限的 PAT，用于自动更新 Cron |
 | `TG_BOT_TOKEN` | ❌ | Telegram Bot Token，用于推送通知 |
 | `TG_CHAT_ID` | ❌ | Telegram 接收消息的 Chat ID |
+| `FREEZEHOST_PROXY_SERVER` | ❌ | Playwright 浏览器代理，例如 `http://host:port`、`socks5://host:port`、`http://user:pass@host:port`。当 GitHub Actions 直连打不开网站时填写。 |
+
+可选 Variables（仓库 `Settings → Secrets and variables → Actions → Variables`）：
+
+| Variable 名称 | 必填 | 说明 |
+|---|---|---|
+| `FREEZEHOST_BASE_URL` | ❌ | 目标站点地址，默认 `https://free.freezehost.pro`。如果服务迁移到其它域名，可改成例如 `https://freecloud.ltd`。 |
 
 ### 获取 Discord Token
 

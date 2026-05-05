@@ -16,12 +16,18 @@ from playwright.sync_api import sync_playwright, TimeoutError as PlaywrightTimeo
 DISCORD_TOKEN = os.environ.get("FREEZEHOST_DISCORD_TOKEN", "").strip()
 TG_BOT_TOKEN  = os.environ.get("TG_BOT_TOKEN", "").strip()
 TG_CHAT_ID    = os.environ.get("TG_CHAT_ID", "").strip()
+PROXY_SERVER  = (
+    os.environ.get("FREEZEHOST_PROXY_SERVER")
+    or os.environ.get("HTTPS_PROXY")
+    or os.environ.get("HTTP_PROXY")
+    or ""
+).strip()
 
 TIMEOUT        = 60_000
 SCREENSHOT_DIR = Path("screenshots")
 SCREENSHOT_DIR.mkdir(exist_ok=True)
 
-BASE_URL   = "https://free.freezehost.pro"
+BASE_URL   = os.environ.get("FREEZEHOST_BASE_URL", "https://free.freezehost.pro").strip().rstrip("/")
 VIEWPORT_W = 1280
 VIEWPORT_H = 753
 
@@ -587,10 +593,17 @@ def run():
     if not DISCORD_TOKEN:
         raise RuntimeError("缺少 FREEZEHOST_DISCORD_TOKEN")
 
-    log_info("启动浏览器 (WARP 系统级代理)")
+    log_info("启动浏览器")
+    launch_options = {"headless": True}
+    if PROXY_SERVER:
+        launch_options["proxy"] = {"server": PROXY_SERVER}
+        log_info(f"Playwright 代理已启用: {PROXY_SERVER}")
+    else:
+        log_info("未配置 Playwright 代理；将使用系统/Runner 默认网络")
+    log_info(f"目标站点: {BASE_URL}")
 
     with sync_playwright() as pw:
-        browser = pw.chromium.launch(headless=True)
+        browser = pw.chromium.launch(**launch_options)
         page = browser.new_page(viewport={"width": VIEWPORT_W, "height": VIEWPORT_H})
         page.set_default_timeout(TIMEOUT)
         log_info("浏览器就绪")
