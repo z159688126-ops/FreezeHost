@@ -43,6 +43,7 @@
 | `TG_BOT_TOKEN` | ❌ | Telegram Bot Token，用于推送通知 |
 | `TG_CHAT_ID` | ❌ | Telegram 接收消息的 Chat ID |
 | `FREEZEHOST_PROXY_SERVER` | ❌ | Playwright 浏览器代理，例如 `http://host:port`、`socks5://host:port`、`http://user:pass@host:port`。当 GitHub Actions 直连打不开网站时填写。 |
+| `FREEZEHOST_HYSTERIA2_URI` | ❌ | Hysteria2 节点链接，例如 `hysteria2://...`。填写后 Actions 会自动启动 sing-box，把节点转成本地 SOCKS 代理给浏览器使用。优先级高于 `FREEZEHOST_PROXY_SERVER`。 |
 
 可选 Variables（仓库 `Settings → Secrets and variables → Actions → Variables`）：
 

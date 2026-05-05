@@ -68,6 +68,46 @@ jobs:
           echo "[INFO] WARP Trace:"
           curl -s --max-time 10 https://www.cloudflare.com/cdn-cgi/trace | grep -E 'ip=|warp=|loc='
 
+      - name: 启动 Hysteria2 节点代理
+        env:
+          FREEZEHOST_HYSTERIA2_URI: ${{ secrets.FREEZEHOST_HYSTERIA2_URI }}
+        run: |
+          set -e
+          if [ -z "$FREEZEHOST_HYSTERIA2_URI" ]; then
+            echo "[INFO] 未配置 Hysteria2 节点，跳过 sing-box。"
+            exit 0
+          fi
+          echo "[INFO] 安装 sing-box..."
+          SING_BOX_VERSION="1.12.8"
+          curl -L -o sing-box.tar.gz "https://github.com/SagerNet/sing-box/releases/download/v${SING_BOX_VERSION}/sing-box-${SING_BOX_VERSION}-linux-amd64.tar.gz"
+          tar -xzf sing-box.tar.gz
+          sudo install -m 755 "sing-box-${SING_BOX_VERSION}-linux-amd64/sing-box" /usr/local/bin/sing-box
+
+          echo "[INFO] 生成 sing-box 配置..."
+          python scripts/hysteria2_to_singbox.py
+
+          echo "[INFO] 启动本地 SOCKS 代理 127.0.0.1:10808..."
+          nohup sing-box run -c sing-box-hysteria2.json > sing-box.log 2>&1 &
+          echo $! > sing-box.pid
+          sleep 5
+
+          echo "[INFO] 检查代理出口 IP..."
+          curl --socks5-hostname 127.0.0.1:10808 -s --max-time 20 https://api.ipify.org && echo
+          echo "FREEZEHOST_PROXY_SERVER=socks5://127.0.0.1:10808" >> "$GITHUB_ENV"
+
+      - name: 设置普通代理
+        env:
+          FREEZEHOST_PROXY_SERVER_SECRET: ${{ secrets.FREEZEHOST_PROXY_SERVER }}
+        run: |
+          if [ -n "${FREEZEHOST_PROXY_SERVER:-}" ]; then
+            echo "[INFO] 已由 Hysteria2 节点设置代理。"
+          elif [ -n "$FREEZEHOST_PROXY_SERVER_SECRET" ]; then
+            echo "FREEZEHOST_PROXY_SERVER=$FREEZEHOST_PROXY_SERVER_SECRET" >> "$GITHUB_ENV"
+            echo "[INFO] 已设置普通代理。"
+          else
+            echo "[INFO] 未配置普通代理。"
+          fi
+
       - name: 设置 Discord Token
         run: |
           TOKEN_NUM="${{ steps.select_token.outputs.token_number }}"
@@ -83,7 +123,6 @@ jobs:
 
       - name: 运行重启脚本
         env:
-          FREEZEHOST_PROXY_SERVER: ${{ secrets.FREEZEHOST_PROXY_SERVER }}
           FREEZEHOST_BASE_URL: ${{ vars.FREEZEHOST_BASE_URL || 'https://free.freezehost.pro' }}
           TG_BOT_TOKEN: ${{ secrets.TG_BOT_TOKEN }}
           TG_CHAT_ID: ${{ secrets.TG_CHAT_ID }}
